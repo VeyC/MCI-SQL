@@ -491,24 +491,11 @@ def sql_selection(task: Any, execution_history: Dict[str, Any]) -> Dict[str, Any
     config,node_name = PipelineManager().get_model_para()
     print(f"{node_name=}, {type(execution_history)=}, {type(task)=}")
     paths = DatabaseManager()
-
-    arctic_model = ArcticManager()
-    schema_sqls = get_last_node_result(execution_history, "schema_linking")["sqls"]
-    schema_info_sqls = get_last_node_result(execution_history, "schema_linking_info")["sqls"]
-    filter_schema = get_filter_schema_from_sqls(schema_sqls, schema_info_sqls, task.db_desc)
-    arctic_sqls = arctic_model.infer(
-                input_text="",
-                db_desc=filter_schema,
-                question=task.question,
-                return_all=True  # 返回所有候选SQL
-            )
-    print('+++++'*6)
-    print(arctic_sqls)
     
     sqlite_dir=paths.db_path
 
     style_refinement_sqls = get_last_node_result(execution_history, "sql_output_refinement")["sqls"]
-    candidate_sqls = arctic_sqls + style_refinement_sqls
+    candidate_sqls = style_refinement_sqls
     sampling_num = len(candidate_sqls)
     db_files = [sqlite_dir] * sampling_num
     mj_pred_sqls = major_voting(db_files, candidate_sqls, sampling_num) # [[sql]]   
